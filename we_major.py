@@ -4,32 +4,7 @@ import time
 global heard_em_say_uri
 global wake_up_mr_west_uri
 
-#prints and returns a string of song name
-def print_song(access_token):
-    headers = {"Authorization": f"Bearer {access_token}"}
-    r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
-
-    if r.status_code == 204:
-        print("Nothing is playing")
-        return None
-    elif r.status_code != 200:
-        print(r.status_code, " ", r.text)
-        return None
-
-    song = r.json()['item']
-    if song is None:
-        print(r.status_code, " ", r.text)
-        return
-    else:
-        song = r.json()['item']['name']
-
-
-    string = f"{song} -\n {r.json().get('item').get('artists')[0].get('name')}"
-    print(string)
-    print()
-    return string
-
-#returns track uri of currently playing song
+#returns track uri, length in milliseconds of the currently playing song, how far you are into the currently playing song, and the image url
 def get_currently_playing(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
@@ -37,6 +12,9 @@ def get_currently_playing(access_token):
     if r.status_code == 204:
         print("Nothing is playing")
         return None
+    elif r.status_code == 429:
+        print("Rate limited. Retry after", r.headers.get("Retry-After"), "seconds")
+        return None
     elif r.status_code != 200:
         print(r.status_code, " ", r.text)
         return None
@@ -46,7 +24,7 @@ def get_currently_playing(access_token):
         print(r.status_code, " ", r.text)
         return
     else:
-        return r.json()['item']['uri']
+        return r.json()['item']['uri'], r.json()['item']['duration_ms'], r.json()['progress_ms'], r.json()["item"]["album"]["images"][0]["url"], r.json()['item']['name'], r.json()['item']['artists'][0]['name']
  
 #Adds a song you choose to the queue
 def add_to_queue(access_token, audio_uri):
@@ -69,18 +47,9 @@ def find_song(access_token, song_name, artist_name=None):
     else:
         query = f"track:{song_name}"
 
-    params = {
-        "q": query,
-        "type": "track",
-        "market": "US",
-        "limit": 10
-    }
+    params = {"q": query, "type": "track", "market": "US", "limit": 10}
 
-    r = requests.get(
-        "https://api.spotify.com/v1/search",
-        headers=headers,
-        params=params
-    )
+    r = requests.get("https://api.spotify.com/v1/search", headers=headers, params=params)
 
     if r.status_code != 200:
         print("Search failed:", r.status_code)
@@ -155,6 +124,12 @@ def list_next_queue(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
     
     r = requests.get("https://api.spotify.com/v1/me/player/queue", headers=headers)
+
+    if r.status_code not in[200,204]:
+        if r.status_code == 429:
+            print("Rate limited. Retry after", r.headers.get("Retry-After"), "seconds")
+        return {}
+
     queue_songs = r.json()['queue']
 
     queue = {}
@@ -173,6 +148,8 @@ def get_image_url(access_token, current_song):
         images = r.json()["album"]["images"]
         if images:
             return images[0]["url"]
+    if r.status_code == 429:
+        print("Rate limited. Retry after", r.headers.get("Retry-After"), "seconds")
     else:
         print(r.status_code, " ", r.text)
     return None 

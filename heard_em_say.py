@@ -8,7 +8,6 @@ from typing import Final
 from through_the_wire import MyHTTPServer, server_handler, run
 import threading
 import we_major
-import readchar
 import time
 from pathlib import Path
 import customtkinter as ctk
@@ -107,7 +106,7 @@ device_code = we_major.get_device_code(access_token)
 running = True
 auto_switch = False
 paused_song = None
-current_song = we_major.get_currently_playing(access_token)
+current_song = we_major.get_currently_playing(access_token)[0]
 
 print()
 
@@ -122,12 +121,15 @@ class SpotifyControllerScreen(ctk.CTk):
         self.geometry("500x650")
         self.resizable(True, True)
 
+        self.after_id = None
+
+        self.song_info = None
+
         self.queue_frame = ctk.CTkFrame(self, width=200, height=210)
         self.queue_frame.pack(side = "right", fill="y", padx=15, pady=20)
 
         self.queue_box = ctk.CTkTextbox(self.queue_frame, width=180, height=580)
         self.queue_box.pack(padx=10, pady=10)
-        self.fill_queue_box()
 
         self.add_queue_btn = ctk.CTkButton(self, text="Add To Queue", command=self.add_queue, fg_color="#333333")
         self.add_queue_btn.pack(pady=5, padx=20, fill="x")
@@ -149,13 +151,13 @@ class SpotifyControllerScreen(ctk.CTk):
         
         self.current_song_textbox = ctk.CTkTextbox(self.current_song_frame, width=180, height=100)
         self.current_song_textbox.pack(padx=10, pady=10)
-        self.fill_current_song_textbox()
 
         self.cover_image = None
         self.last_cover_url = None
         self.cover_label = ctk.CTkLabel(self, text="")
         self.cover_label.pack(pady=10)
-        self.update_cover()
+
+        self.refresh_all()
 
 
 
@@ -170,18 +172,26 @@ class SpotifyControllerScreen(ctk.CTk):
 
     def next_song(self):
         we_major.skip_song(access_token)
+        if self.after_id is not None:
+            self.after_cancel(self.after_id)
+            self.after_id = self.after(1000, self.refresh_all)
 
     def previous_song(self):
         we_major.previous_song(access_token)
+        if self.after_id is not None:
+            self.after_cancel(self.after_id)
+            self.after_id = self.after(1000, self.refresh_all)
 
     def add_queue(self):
         song_string = self.input_entry.get()
-        song_string_array = song_string.split(",")
-        song_name = song_string_array[0]
+        song_string_array = song_string.rsplit(" - ",1)
+        if len(song_string_array) != 2:
+            return
+        song_name = song_string_array[0].strip()
         song_artist = song_string_array[1].strip()
         audio_uri = we_major.find_song(access_token, song_name, song_artist)
         we_major.add_to_queue(access_token,audio_uri)
-        self.fill_queue_box()
+        self.after(1000, self.fill_queue_box)
 
     def fill_queue_box(self):
         self.queue_box.configure(state="normal")
@@ -191,30 +201,46 @@ class SpotifyControllerScreen(ctk.CTk):
             string = f"{name} - {artist}\n"
             self.queue_box.insert("end", string)
         self.queue_box.configure(state="disabled")
-        self.after(5000,self.fill_queue_box)
 
     def fill_current_song_textbox(self):
         self.current_song_textbox.configure(state="normal")
         self.current_song_textbox.delete("1.0", "end")
-        string = we_major.print_song(access_token)
+        current_song_info = self.song_info
+        string = f"{current_song_info[4]} -\n{current_song_info[5]}"
         if string is None:
             self.current_song_textbox.insert("end", "Nothing is playing")
         else:
             self.current_song_textbox.insert("end", string)
         self.current_song_textbox.configure(state="disabled")
-        self.after(5000,self.fill_current_song_textbox)
 
     def update_cover(self):
-        current_song = we_major.get_currently_playing(access_token)
-        if current_song is not None:
-            url = we_major.get_image_url(access_token, current_song)
-            if url is not None and url != self.last_cover_url:
-                response = requests.get(url)
-                image = Image.open(BytesIO(response.content))
-                self.cover_image = ctk.CTkImage(light_image=image, dark_image=image, size=(200, 200))
-                self.cover_label.configure(image=self.cover_image)
-                self.last_cover_url = url
-        self.after(5000, self.update_cover)
+        current_song_info = self.song_info
+        if current_song_info is None:
+            return
+        else:
+            current_song = current_song_info[0]
+            song_length = (current_song_info[1] - current_song_info[2]) + 1000
+            url = current_song_info[3]
+            if current_song is not None:
+                if url is not None and url != self.last_cover_url:
+                    response = requests.get(url)
+                    image = Image.open(BytesIO(response.content))
+                    self.cover_image = ctk.CTkImage(light_image=image, dark_image=image, size=(200, 200))
+                    self.cover_label.configure(image=self.cover_image)
+                    self.last_cover_url = url
+
+    def refresh_all(self):
+        self.song_info = we_major.get_currently_playing(access_token)
+        song_length = 10000
+
+        if self.song_info is not None:
+            #call the update methods
+            self.fill_current_song_textbox()
+            self.update_cover()
+            self.fill_queue_box()
+            song_length = (self.song_info[1] - self.song_info[2]) + 1000
+
+        self.after_id = self.after(min(song_length,30000), self.refresh_all)
 
 if __name__ == "__main__":
     window = SpotifyControllerScreen()
