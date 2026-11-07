@@ -1,5 +1,11 @@
 # spotify_controller
-I wanted to make Wake Up Mr West and Heard 'Em Say by Kanye always play in order.
+<p align = "center">
+  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/2a770a04-b1ee-44ca-a285-b201a20e80e3" />
+  <br>
+  <em>The Spotify controller</em>
+</p>
+
+I wanted to make a way to control my Spotify when I don't always have access to my phone for extended periods of time, without running Spotify in my web browser
 
 ## Overview
 I explored HTTP requests and HTTP servers to access certain commands in the Spotify Web API. There was no use of the spotipy library.
@@ -8,29 +14,68 @@ I explored HTTP requests and HTTP servers to access certain commands in the Spot
 - HTTPServer made in Python
 - Usage of HTTP requests
 - Can pause, play, skip, add to queue, and get the current song
-- Detects Heard 'Em Say and Wake Up Mr West from active listening device
+- Shows a window that:
+  - Displays the current song title with the album cover that refreshes every 5 seconds
+  - Displays the next 7 songs in the queue that refreshes every 5 seconds
+  - Has button options explained in Usage
 
 ## Technologies
 - Python
 - Spotify Web API
 
 ## Installation
-- Use `git clone https://github.com/SETHCODES13/spotify_controller.git`
-- Needs Python libraries: `pip install requests readchar`
+1. Clone the repository and enter the folder:
+  ```
+  git clone https://github.com/SETHCODES13/spotify_controller.git
+  cd spotify_controller
+  ```
+2. Create and activate a virtual environment(optional but recommended):
+
+  **Linux & macOS**
+  ```
+  python3 -m venv .venv
+  source .venv/bin/activate
+  ```
+  
+  **Windows(Command Prompt)**
+  ```
+  python -m venv .venv
+  .venv\Scripts\activate
+  ```
+3. Install the required Libraries:
+  ```
+  pip install -r requirements.txt
+  ```
+
+***Note***: `sudo apt install python3-tk` on Debian or Ubuntu if Tkinter is missing
 
 ## Setup
-I made an app using the Spotify Web API. I then used OAuth2 Authorization to get an access token with this callback that you need to use as well unless you modify that section of the code: `http://127.0.0.1:8888/callback`. This was used to make HTTP requests to the Spotify Web API. You will need to put in your own client id as mine is there currently. Playback control requires Spotify Premium. After the first run, it will open a browser where you allow the permissions necessary to run this. You do not need a `homecoming.tcd` file to run this code
+1. Create an app on the [Spotify Developer API](https://developer.spotify.com/)
+2. Add the redirect URL `http://127.0.0.1:8888/callback`
+3. Paste your Client ID in the `client_id` line in `heard_em_say.py`
 
 ## Usage
-When you run `heard_em_say.py` it will tell you when it is ready to receive commands by printing `"Enter your command"`. It will print this every time it is ready
-| Command | Function |
+<p align = "center">
+  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/b88a2955-04ee-49ee-b41c-cc04883b5e9d" />
+  <br>
+  <em>The standard look of the window</em>
+</p>
+<p align = "center">
+  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/663d7bdb-f032-41be-8e9c-cc17382acbf5" />
+  <br>
+  <em>Adding something to the queue</em>
+</p>
+
+
+When you run `python3 heard_em_say.py`, it shows the pop-up window shown above, which will be fully activated when a song is playing
+| Button | Function |
 | :------ | :------- |
-| `c` | Prints the current song playing |
-| `n` | Allows you to enter the title and artist, then adds that song to the queue |
-| `p` | Pauses the current song |
-| `s` | Skips the current song |
-| `r` | Resumes the current song (currently not perfect) |
-| `q` | Quits the program and shuts down the server |
+| `Add to Queue` | Adds the song entered in the textbox in the format (Song Name, Song Artist) |
+| `Pause/Play` | Pauses and plays the song based on whether it's paused or not. 
+|              |*Spotify API deactivates the player shortly after being paused, so resuming can fail*|
+| `Next Song` | Plays the next song|
+| `Previous Song` | Plays the previous song |
+
 
 ## License
 MIT License, see [LICENSE](LICENSE.txt)
