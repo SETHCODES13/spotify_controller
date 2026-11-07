@@ -70,7 +70,7 @@ I explored HTTP requests and HTTP servers to access certain commands in the Spot
 When you run `python3 heard_em_say.py`, it shows the pop-up window shown above, which will be fully activated when a song is playing
 | Button | Function |
 | :------ | :------- |
-| `Add to Queue` | Adds the song entered in the textbox in the format (Song Name, Song Artist) |
+| `Add to Queue` | Adds the song entered in the textbox in the format (Song Name - Song Artist) |
 | `Pause/Play` | Pauses and plays the song based on whether it's paused or not. 
 |              |*Spotify API deactivates the player shortly after being paused, so resuming can fail*|
 | `Next Song` | Plays the next song|
