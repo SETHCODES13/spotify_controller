@@ -34,7 +34,7 @@ client_id = "08a41d35326f478f8d7dfaefb01dde35"
 redirect_uri = "http://127.0.0.1:8888/callback"
 auth_URL = "https://accounts.spotify.com/authorize"
 
-verif = {'client_id':client_id, 'response_type':'code', 'redirect_uri':redirect_uri, 'scope': 'user-read-currently-playing user-read-playback-state user-modify-playback-state', 'code_challenge_method':'S256', 'code_challenge':code_challenge, 'state':STATE}
+verif = {'client_id':client_id, 'response_type':'code', 'redirect_uri':redirect_uri, 'scope': 'user-read-currently-playing user-read-playback-state user-modify-playback-state playlist-read-private playlist-modify-private playlist-modify-public', 'code_challenge_method':'S256', 'code_challenge':code_challenge, 'state':STATE}
 auth_url = requests.Request('GET', auth_URL, params=verif).prepare().url
 
 file_path = Path("homecoming.tcd")
@@ -118,12 +118,17 @@ class SpotifyControllerScreen(ctk.CTk):
         super().__init__()
         
         self.title("spotify_controller")
-        self.geometry("500x650")
+        self.geometry("500x700")
         self.resizable(True, True)
 
         self.after_id = None
 
         self.song_info = None
+        
+        self.playlist_info = we_major.get_user_playlists(access_token)
+        self.playlists_names = list(self.playlist_info.keys())
+        self.playlists_uris =  list(self.playlist_info.values())
+
 
         self.queue_frame = ctk.CTkFrame(self, width=200, height=210)
         self.queue_frame.pack(side = "right", fill="y", padx=15, pady=20)
@@ -131,17 +136,31 @@ class SpotifyControllerScreen(ctk.CTk):
         self.queue_box = ctk.CTkTextbox(self.queue_frame, width=180, height=580)
         self.queue_box.pack(padx=10, pady=10)
 
-        self.add_queue_btn = ctk.CTkButton(self, text="Add To Queue", command=self.add_queue, fg_color="#333333")
+        self.add_queue_btn = ctk.CTkButton(self, text="Add To Queue", command=self.add_queue)
         self.add_queue_btn.pack(pady=5, padx=20, fill="x")
 
-        self.play_btn = ctk.CTkButton(self, text="Pause / Play", command=self.toggle_play)
+        self.play_btn = ctk.CTkButton(self, text="Pause / Play", command=self.toggle_play, fg_color="#333333")
         self.play_btn.pack(pady=5, padx=20, fill="x")
 
-        self.skip_btn = ctk.CTkButton(self, text="Next Song", command=self.next_song, fg_color="#333333")
+        self.skip_btn = ctk.CTkButton(self, text="Next Song", command=self.next_song)
         self.skip_btn.pack(pady=5, padx=20, fill="x")
 
-        self.previous_btn = ctk.CTkButton(self, text="Previous Song", command=self.previous_song)
+        self.previous_btn = ctk.CTkButton(self, text="Previous Song", command=self.previous_song, fg_color="#333333")
         self.previous_btn.pack(pady=5, padx=20, fill="x")
+
+        self.play_chosen_playlist_btn = ctk.CTkButton(self, text="Play Playlist", command=self.play_playlist)
+        self.play_chosen_playlist_btn.pack(pady=5, padx=20, fill="x")
+
+        self.choose_playlist_btn = ctk.CTkOptionMenu(self, values=self.playlists_names, fg_color="#333333")
+        self.choose_playlist_btn.pack(pady=5, padx=20, fill="x")
+
+        self.shuffle_var = ctk.BooleanVar(value = True)
+        self.choose_shuffle_btn = ctk.CTkCheckBox(self, text = "Shuffle", width=50, height=5, variable=self.shuffle_var, onvalue = True, offvalue = False)
+        self.choose_shuffle_btn.pack(pady=5)
+
+        self.repeat_var = ctk.BooleanVar(value = True)
+        self.choose_repeat_btn = ctk.CTkCheckBox(self, text = "Repeat", width=50, height=5, variable=self.repeat_var, onvalue = True, offvalue = False)
+        self.choose_repeat_btn.pack(pady=5)
 
         self.input_entry = ctk.CTkEntry(master=self, width=200, height=5 ,corner_radius=4 ,placeholder_text="Enter song for queue",font=("Helvetica", 14),text_color="#FFFFFF",fg_color="#2b2b2b")
         self.input_entry.pack(pady=5)
@@ -151,6 +170,7 @@ class SpotifyControllerScreen(ctk.CTk):
         
         self.current_song_textbox = ctk.CTkTextbox(self.current_song_frame, width=180, height=100)
         self.current_song_textbox.pack(padx=10, pady=10)
+
 
         self.cover_image = None
         self.last_cover_url = None
@@ -228,6 +248,35 @@ class SpotifyControllerScreen(ctk.CTk):
                     self.cover_image = ctk.CTkImage(light_image=image, dark_image=image, size=(200, 200))
                     self.cover_label.configure(image=self.cover_image)
                     self.last_cover_url = url
+
+    def play_playlist(self):
+        headers = {"Authorization": f"Bearer {access_token}"}
+        data = {"context_uri": self.playlist_info[self.choose_playlist_btn.get()]}
+        r = requests.put("https://api.spotify.com/v1/me/player/play", headers=headers, json=data)
+
+        if r.status_code in [200,204]:
+            print("Playing ")
+        else:
+            print(r.status_code, " ", r.text)
+
+        shuffle = self.shuffle_var.get()
+        repeat = self.repeat_var.get()
+
+        if shuffle:
+            shuffle_option = "true" if shuffle else "false"
+            params = {"state":shuffle_option}
+            r = requests.put("https://api.spotify.com/v1/me/player/shuffle", headers=headers, params=params)
+            if r.status_code not in [200,204]:
+                print(r.status_code, " ", r.text)
+        if repeat:
+            repeat_option = "context" if repeat else "off"
+            params = {"state": repeat_option}
+            r = requests.put("https://api.spotify.com/v1/me/player/repeat", headers=headers, params=params)
+            if r.status_code not in [200,204]:
+                print(r.status_code, " ", r.text)
+
+        self.refresh_all()
+        return        
 
     def refresh_all(self):
         self.song_info = we_major.get_currently_playing(access_token)

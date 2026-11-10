@@ -153,3 +153,21 @@ def get_image_url(access_token, current_song):
     else:
         print(r.status_code, " ", r.text)
     return None 
+
+#returns dictionary of all users playlists in format{"name":"playlist_uri"}
+def get_user_playlists(access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    r = requests.get("https://api.spotify.com/v1/me/playlists", headers=headers)
+    
+    playlists = {}
+
+    if r.status_code == 200:
+        items = r.json()['items']
+        for item in items:
+            playlists[item['name']] = item['uri']
+    else:
+        print(r.status_code, " ", r.text)
+        return playlists
+    
+    print("Playlists found")
+    return playlists
