@@ -1,6 +1,6 @@
 # spotify_controller
 <p align = "center">
-  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/2a770a04-b1ee-44ca-a285-b201a20e80e3" />
+  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/02a16265-74bf-4f56-86eb-054c6be9f58c" />
   <br>
   <em>The Spotify controller</em>
 </p>
@@ -13,7 +13,8 @@ I explored HTTP requests and HTTP servers to access certain commands in the Spot
 ## Features
 - HTTPServer made in Python
 - Usage of HTTP requests
-- Can pause, play, skip, add to queue, and get the current song
+- Can pause, play, skip, add to queue, play one of your playlists, ![Uploading Screenshot 2026-11-09 19.44.12.png…]()
+and get the current song
 - Shows a window that:
   - Displays the current song title with the album cover that refreshes every 5 seconds
   - Displays the next 7 songs in the queue that refreshes every 5 seconds
@@ -56,16 +57,15 @@ I explored HTTP requests and HTTP servers to access certain commands in the Spot
 
 ## Usage
 <p align = "center">
-  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/b88a2955-04ee-49ee-b41c-cc04883b5e9d" />
+  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/175830b4-8e2c-4ddf-bee5-bae8a7c3daf9" />
   <br>
   <em>The standard look of the window</em>
 </p>
 <p align = "center">
-  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/663d7bdb-f032-41be-8e9c-cc17382acbf5" />
+  <img width="400" alt="spotify_controller window" src="https://github.com/user-attachments/assets/1c61b57b-bcf5-4438-90df-88af2cb1dc2f" />
   <br>
   <em>Adding something to the queue</em>
 </p>
-
 
 When you run `python3 heard_em_say.py`, it shows the pop-up window shown above, which will be fully activated when a song is playing
 | Button | Function |
@@ -75,6 +75,9 @@ When you run `python3 heard_em_say.py`, it shows the pop-up window shown above, 
 |              |*Spotify API deactivates the player shortly after being paused, so resuming can fail*|
 | `Next Song` | Plays the next song|
 | `Previous Song` | Plays the previous song |
+| `Play Playlist` | Plays the playlist selected in the dropdown menu |
+| `Shuffle` | Choose whether the playlist is going to be on shuffle |
+| `Repeat` | Choose whether the playlist is going to repeat itself |
 
 
 ## License
